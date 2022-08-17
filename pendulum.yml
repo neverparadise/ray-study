@@ -1,0 +1,11 @@
+pendulumppo:
+  env: Pendulum-v1
+  run: PPO
+  checkpoint_freq: 5
+  stop:
+    episode_reward_mean: 800
+  config:
+    lambda: 0.1
+    gamma: 0.95
+    lr: 0.0003
+    num_sgd_iter: 6
