@@ -1,2 +1,4 @@
 .history
 ./*.npy
+./__pycache__
+.idea
