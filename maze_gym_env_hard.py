@@ -7,8 +7,11 @@ import time
 import numpy as np
 
 
-env_config = {"grid_size": 5,
-             "goal_reward": 1,
+env_config = {"grid_size": 7,
+             "goal_reward": 20,
+             "out_reward": -10,
+             "step_reward":-1,
+             "obstacle_reward": -5,
              "max_step": 200 }
 
 class Environment:
@@ -17,15 +20,20 @@ class Environment:
         self.grid_size = env_config['grid_size']
         self.goal_reward = env_config['goal_reward']
         self.max_step = env_config['max_step']
-
+        self.out_reward = env_config["out_reward"]
+        self.step_reward = env_config["step_reward"]
+        self.obstacle_reward = env_config["obstacle_reward"]
         self.action_space = Discrete(4)
         self.observation_space = Discrete(self.grid_size*self.grid_size)
         self.seeker, self.goal = (0, 0), (self.grid_size-1, self.grid_size-1)
         self.info = {'seeker': self.seeker, 'goal': self.goal}
         self.timestep = 0
-
+        self.obstacle_states = [
+            (i, j) for i in range(self.grid_size) for j in range(self.grid_size)
+            if i % 2 == 1 and j % 2 == 0
+        ]
     def reset(self):
-        self.seeker = (0, 0) # row, col
+        self.seeker = (random.randint(0, self.grid_size - 1), random.randint(0, self.grid_size - 1)) # row, col
         self.goal = (self.grid_size-1, self.grid_size-1)
         self.timestep = 0
         return self.get_observation()
@@ -34,7 +42,9 @@ class Environment:
         return self.grid_size * self.seeker[0] + self.seeker[1]
     
     def get_reward(self):
-        return self.goal_reward if self.seeker == self.goal else 0
+        reward = self.obstacle_reward if self.seeker in self.obstacle_states else 0
+        reward += self.goal_reward if self.seeker == self.goal else 0
+        return reward
     
     def is_done(self):
         if self.timestep == self.max_step:
@@ -80,7 +90,7 @@ class Environment:
             raise ValueError("Invalid action")
 
         if is_out:
-            reward = -10
+            reward = self.out_reward
         else:
             reward = self.get_reward()
 
@@ -92,6 +102,9 @@ class Environment:
         grid = [grid_row + ["|\n"] for _ in range(self.grid_size)]
         grid[self.goal[0]][self.goal[1]] = '|G'
         grid[self.seeker[0]][self.seeker[1]] = '|A'
+        for obstacle in self.obstacle_states:
+            grid[obstacle[0]][obstacle[1]] = '|O'
+
         print(''.join([''.join(grid_row) for grid_row in grid]))
 
 

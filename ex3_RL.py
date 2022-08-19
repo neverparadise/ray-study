@@ -3,99 +3,10 @@ import random
 import os
 import time
 import numpy as np
+#from maze_gym_env import Environment
+from maze_gym_env_hard import Environment
 
-class Discrete:
-    def __init__(self, num_actions) -> None:
-        self.n = num_actions
 
-    def sample(self):
-        return random.randint(0, self.n-1)
-
-space = Discrete(4)
-
-class Environment:
-
-    def __init__(self, grid_size=5, goal_reward=1, max_step=200, *args, **kwargs) -> None:
-        self.grid_size = grid_size
-        self.action_space = Discrete(4)
-        self.observation_space = Discrete(grid_size*grid_size)
-        self.seeker, self.goal = (0, 0), (grid_size-1, grid_size-1)
-        self.info = {'seeker': self.seeker, 'goal': self.goal}
-        self.goal_reward = goal_reward
-        self.timestep = 0
-        self.max_step = max_step
-
-    def reset(self):
-        self.seeker = (0, 0) # row, col
-        self.goal = (self.grid_size-1, self.grid_size-1)
-        self.timestep = 0
-        return self.get_observation()
-    
-    def get_observation(self):
-        return self.grid_size * self.seeker[0] + self.seeker[1]
-    
-    def get_reward(self):
-        return self.goal_reward if self.seeker == self.goal else -1
-    
-    def is_done(self):
-        if self.timestep == self.max_step:
-            return True
-        return self.seeker == self.goal
-
-    def check_pos(self, seeker):
-        is_out = False
-        if seeker[0] < 0 or seeker[0] > self.grid_size - 1 or \
-            seeker[1] < 0 or seeker[1] > self.grid_size - 1: 
-            is_out = True
-        return is_out
-
-    def step(self, action):
-        self.timestep += 1
-        reward = 0
-        is_out = False
-
-        if action == 0: # move left
-            self.seeker = (self.seeker[0], self.seeker[1] - 1)
-            is_out =  self.check_pos(self.seeker)
-            if is_out:
-                self.seeker = (self.seeker[0], self.seeker[1] + 1)
-
-        elif action == 1: # move right
-            self.seeker = (self.seeker[0], self.seeker[1] + 1)
-            is_out =  self.check_pos(self.seeker)
-            if is_out:
-                self.seeker = (self.seeker[0], self.seeker[1] - 1)
-
-        elif action == 2: # move up
-            self.seeker = (self.seeker[0] - 1, self.seeker[1])
-            is_out =  self.check_pos(self.seeker)
-            if is_out:
-                self.seeker = (self.seeker[0] + 1, self.seeker[1])
-                
-        elif action == 3: # move down
-            self.seeker = (self.seeker[0] + 1, self.seeker[1])
-            is_out =  self.check_pos(self.seeker)
-            if is_out:
-                self.seeker = (self.seeker[0] - 1, self.seeker[1])
-        else:
-            raise ValueError("Invalid action")
-
-        if is_out:
-            reward = -10
-        else:
-            reward = self.get_reward()
-
-        return self.get_observation(), reward, self.is_done(), self.info
-
-    def render(self, *args, **kwaargs):
-        os.system('cls' if os.name == 'nt' else 'clear')
-        grid_row = ['| ' for _ in range(self.grid_size)] 
-        grid = [grid_row + ["|\n"] for _ in range(self.grid_size)]
-        grid[self.goal[0]][self.goal[1]] = '|G'
-        grid[self.seeker[0]][self.seeker[1]] = '|A'
-        print(''.join([''.join(grid_row) for grid_row in grid]))
-
-    
 class Policy:
 
     def __init__(self, env):
@@ -165,7 +76,7 @@ def train_policy(env, num_episodes=10000, weight=0.1, discount_factor=0.9, epsil
     for e in range(num_episodes):
         trajectory = sim.rollout(e, policy, render=False, explore=True, epsilon=epsilon)
         update_policy(policy, trajectory, weight, discount_factor)
-        if e % 2000 == 0 and e > 0 :
+        if e % 10000 == 0 and e > 0 :
             policy.save(e)
 
     return policy
@@ -195,9 +106,9 @@ untrained_policy = Policy(env)
 sim = Simulation(env)
 exp = sim.rollout(1, untrained_policy, render=True, epsilon=1.0)
 
-trained_policy = train_policy(env, num_episodes=10000)
+#trained_policy = train_policy(env, num_episodes=100000)
 policy = Policy(env)
-avg_steps, avg_score, total_reward_lst = evaluate_policy(env, policy, "policy8000.npy")
+avg_steps, avg_score, total_reward_lst = evaluate_policy(env, policy, "policy90000.npy")
 print(f"avg_steps: {avg_steps}, avg_score: {avg_score}")
 print(np.round(policy.state_action_table, 2))
 
