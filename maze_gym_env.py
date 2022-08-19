@@ -6,17 +6,23 @@ import os
 import time
 import numpy as np
 
+
+env_config = {"grid_size": 5,
+             "goal_reward": 1,
+             "max_step": 200 }
+
 class Environment:
 
-    def __init__(self, grid_size=5, goal_reward=1, max_step=200, *args, **kwargs) -> None:
-        self.grid_size = grid_size
+    def __init__(self, *args, **kwargs) -> None:
+        self.grid_size = env_config['grid_size']
+        self.goal_reward = env_config['goal_reward']
+        self.max_step = env_config['max_step']
+
         self.action_space = Discrete(4)
-        self.observation_space = Discrete(grid_size*grid_size)
-        self.seeker, self.goal = (0, 0), (grid_size-1, grid_size-1)
+        self.observation_space = Discrete(self.grid_size*self.grid_size)
+        self.seeker, self.goal = (0, 0), (self.grid_size-1, self.grid_size-1)
         self.info = {'seeker': self.seeker, 'goal': self.goal}
-        self.goal_reward = goal_reward
         self.timestep = 0
-        self.max_step = max_step
 
     def reset(self):
         self.seeker = (0, 0) # row, col
@@ -28,7 +34,7 @@ class Environment:
         return self.grid_size * self.seeker[0] + self.seeker[1]
     
     def get_reward(self):
-        return self.goal_reward if self.seeker == self.goal else -1
+        return self.goal_reward if self.seeker == self.goal else 0
     
     def is_done(self):
         if self.timestep == self.max_step:
@@ -93,5 +99,5 @@ class GymEnvironment(Environment, gym.Env):
     def __init__(self, grid_size=5, goal_reward=1, max_step=200, *args, **kwargs) -> None:
         super().__init__(grid_size, goal_reward, max_step, *args, **kwargs)
 
-gym_env = GymEnvironment()
+#gym_env = GymEnvironment()
 
