@@ -1,6 +1,8 @@
 from ray.tune.logger import pretty_print
 from maze_gym_env import GymEnvironment
 from ray.rllib.agents.dqn import DQNTrainer
+from ray.rllib.agents.ppo import PPOTrainer
+
 
 training_config = {"num_workers": 0, 
                 "num_envs_per_worker": 5,

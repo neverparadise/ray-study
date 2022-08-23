@@ -76,20 +76,20 @@ def train_policy(env, num_episodes=10000, weight=0.1, discount_factor=0.9, epsil
     for e in range(num_episodes):
         trajectory = sim.rollout(e, policy, render=False, explore=True, epsilon=epsilon)
         update_policy(policy, trajectory, weight, discount_factor)
-        if e % 10000 == 0 and e > 0 :
+        if e % 2000 == 0 and e > 0 :
             policy.save(e)
 
     return policy
 
 
-def evaluate_policy(env, policy, npy_path, num_episodes=10):
+def evaluate_policy(env, policy, npy_path, num_episodes=10, render=False):
     policy.load(npy_path)
     simulation = Simulation(env)
     steps = 0
     total_reward_lst = []
     avg_score = 0
     for e in range(num_episodes):
-        experiences = simulation.rollout(e, policy, render=True, explore=False, epsilon=0.1, render_time=0.1)
+        experiences = simulation.rollout(e, policy, render=render, explore=False, epsilon=0.1, render_time=0.1)
         total_reward = 0
         for transition in experiences:
             total_reward += transition[2]
@@ -100,16 +100,16 @@ def evaluate_policy(env, policy, npy_path, num_episodes=10):
     return steps / num_episodes, avg_score, total_reward_lst
 
 
+if __name__ == '__main__':
+    env = Environment(grid_size=5, goal_reward=10, max_step=200)
+    untrained_policy = Policy(env)
+    sim = Simulation(env)
+    exp = sim.rollout(1, untrained_policy, render=True, epsilon=1.0)
 
-env = Environment(grid_size=5, goal_reward=10, max_step=200)
-untrained_policy = Policy(env)
-sim = Simulation(env)
-exp = sim.rollout(1, untrained_policy, render=True, epsilon=1.0)
-
-#trained_policy = train_policy(env, num_episodes=100000)
-policy = Policy(env)
-avg_steps, avg_score, total_reward_lst = evaluate_policy(env, policy, "policy90000.npy")
-print(f"avg_steps: {avg_steps}, avg_score: {avg_score}")
-print(np.round(policy.state_action_table, 2))
+    trained_policy = train_policy(env, num_episodes=10000)
+    policy = Policy(env)
+    avg_steps, avg_score, total_reward_lst = evaluate_policy(env, policy, "policy90000.npy", render=True)
+    print(f"avg_steps: {avg_steps}, avg_score: {avg_score}")
+    print(np.round(policy.state_action_table, 2))
 
 
